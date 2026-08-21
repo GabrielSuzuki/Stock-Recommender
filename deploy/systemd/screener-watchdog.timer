@@ -1,0 +1,10 @@
+[Unit]
+Description=Check at 05:20 Pacific that a brief was actually delivered
+
+[Timer]
+OnCalendar=Mon..Fri 05:20
+Persistent=false
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=Run screener Stage A at 01:00 Pacific on weekdays
+
+[Timer]
+# Server timezone is America/Los_Angeles (set by bootstrap.sh), so this is
+# local time and follows DST automatically. Mon-Fri only: the screen runs on
+# the prior session's close, so there is nothing new on Sat/Sun.
+OnCalendar=Mon..Fri 01:00
+# If the box was down at 01:00, run as soon as it is back rather than skipping.
+Persistent=true
+# Spread load off the exact second; irrelevant here but good hygiene.
+RandomizedDelaySec=120
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

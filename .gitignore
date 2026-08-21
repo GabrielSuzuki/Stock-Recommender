@@ -1,0 +1,8 @@
+.env
+data/
+journal/
+*.pyc
+__pycache__/
+.tokenwise/
+*.db
+*.sqlite

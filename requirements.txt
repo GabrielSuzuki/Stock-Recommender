@@ -1,0 +1,12 @@
+requests>=2.32
+pandas>=2.2
+numpy>=1.26
+alpaca-py>=0.21
+anthropic>=0.40
+matplotlib>=3.8
+pyyaml>=6.0
+# pandas.read_html needs an HTML parser it does not bundle. Without one the
+# S&P 500 universe fetch fails with a confusing ImportError-shaped message.
+lxml>=5.0
+beautifulsoup4>=4.12
+html5lib>=1.1

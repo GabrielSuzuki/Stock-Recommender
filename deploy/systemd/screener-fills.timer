@@ -1,0 +1,12 @@
+[Unit]
+Description=Check for fill replies every 10 minutes during market hours
+
+[Timer]
+# Every 10 minutes, 06:00-13:50 Pacific — the whole session plus the pre-open
+# window. Polling outside market hours just burns calls on an empty queue.
+OnCalendar=Mon..Fri 06..13:00/10
+Persistent=false
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

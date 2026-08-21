@@ -1,0 +1,21 @@
+[Unit]
+Description=Screener — log fills from Telegram replies
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=screener
+Group=screener
+WorkingDirectory=/opt/screener/app
+EnvironmentFile=/opt/screener/.env
+ExecStart=/opt/screener/venv/bin/python -m pipeline.fill_listener
+TimeoutStartSec=120
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/screener/data /opt/screener/journal /opt/screener/logs
+StandardOutput=append:/opt/screener/logs/fills.log
+StandardError=append:/opt/screener/logs/fills.log

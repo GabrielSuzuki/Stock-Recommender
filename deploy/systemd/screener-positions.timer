@@ -1,0 +1,13 @@
+[Unit]
+Description=Position check at 10:00 and 12:45 Pacific
+
+[Timer]
+# Mid-session and shortly before the close. The morning brief already carries
+# the open's exit signals, so this catches intraday stop and target hits.
+OnCalendar=Mon..Fri 10:00
+OnCalendar=Mon..Fri 12:45
+Persistent=false
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

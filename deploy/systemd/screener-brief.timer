@@ -1,0 +1,11 @@
+[Unit]
+Description=Run screener Stage B at 05:00 Pacific on weekdays
+
+[Timer]
+OnCalendar=Mon..Fri 05:00
+Persistent=true
+AccuracySec=1s
+# No RandomizedDelaySec: this one is time-critical. 05:00 means 05:00.
+
+[Install]
+WantedBy=timers.target

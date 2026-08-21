@@ -1,0 +1,38 @@
+[Unit]
+Description=Screener Stage A — refresh cache, compute indicators, run screen
+Documentation=file:/opt/screener/app/docs/setup-vps.md
+After=network-online.target
+Wants=network-online.target
+# Cap retries so a persistent failure can't loop all night.
+# These two MUST live in [Unit] -- systemd ignores them in [Service].
+StartLimitBurst=2
+StartLimitIntervalSec=3600
+
+[Service]
+Type=oneshot
+User=screener
+Group=screener
+WorkingDirectory=/opt/screener/app
+EnvironmentFile=/opt/screener/.env
+ExecStart=/opt/screener/venv/bin/python -m pipeline.stage_a_nightly
+# One retry 10 minutes later if the data provider was having a moment.
+Restart=on-failure
+RestartSec=600
+TimeoutStartSec=1800
+
+# Hardening — this process reads market data and writes files. Nothing else.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/screener/data /opt/screener/journal /opt/screener/logs
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+StandardOutput=append:/opt/screener/logs/stage_a.log
+StandardError=append:/opt/screener/logs/stage_a.log
+
+[Install]
+WantedBy=multi-user.target

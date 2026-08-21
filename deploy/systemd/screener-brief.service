@@ -1,0 +1,38 @@
+[Unit]
+Description=Screener Stage B — regime, catalysts, thesis, Telegram push
+Documentation=file:/opt/screener/app/docs/setup-vps.md
+After=network-online.target
+Wants=network-online.target
+# Cap retries so a persistent failure can't loop all night.
+# These two MUST live in [Unit] -- systemd ignores them in [Service].
+StartLimitBurst=3
+StartLimitIntervalSec=1800
+
+[Service]
+Type=oneshot
+User=screener
+Group=screener
+WorkingDirectory=/opt/screener/app
+EnvironmentFile=/opt/screener/.env
+ExecStart=/opt/screener/venv/bin/python -m pipeline.stage_b_brief
+# If Stage B fails, send the alert. `-` prefix means a failure here is ignored.
+ExecStopPost=-/opt/screener/venv/bin/python -m pipeline.notify_failure stage_b
+Restart=on-failure
+RestartSec=180
+TimeoutStartSec=900
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/screener/data /opt/screener/journal /opt/screener/logs
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+StandardOutput=append:/opt/screener/logs/stage_b.log
+StandardError=append:/opt/screener/logs/stage_b.log
+
+[Install]
+WantedBy=multi-user.target

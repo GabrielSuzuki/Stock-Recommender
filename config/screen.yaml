@@ -1,0 +1,87 @@
+# Every screen threshold lives here and nowhere else.
+# Change one number, commit, and the diff is the audit trail.
+version: 1
+updated: 2026-08-21
+
+universe:
+  source: sp500          # locked decision #1
+  min_price: 5.00
+  # MEASURED 2026-08-21 against Alpaca's free feed: it reports ~3.5% of
+  # consolidated tape (IEX only), with a 3.2x spread across symbols. This floor
+  # is therefore set in FEED units, not consolidated units -- 400,000
+  # consolidated shares is roughly 14,000 on this feed.
+  #
+  # Deliberately NOT solved by scaling volume up: a constant multiplier would
+  # put an invented figure into the brief and is only accurate to a factor of
+  # two anyway (NVDA came out 0.5x, MSFT 1.6x). Keeping the feed's real numbers
+  # and moving the threshold is the honest version of the same adjustment.
+  #
+  # For an S&P 500 universe this gate is close to redundant -- index membership
+  # is already a liquidity filter. It earns its place as a guard against a
+  # data glitch, not as a real screen condition.
+  min_avg_volume: 14000
+  avg_volume_window: 50
+
+# Minervini Trend Template — strict AND across all eight. Locked decision #2.
+# An empty result is a valid answer. Do not add a scored fallback.
+trend_template:
+  price_above_ma: [50, 150, 200]
+  ma_stack: [[50, 150], [150, 200]]
+  ma200_rising_days: 21          # ~1 month; 4-5 months preferred
+  max_pct_below_52wk_high: 25
+  min_rs_rank: 70                # 90+ preferred
+
+ranking:
+  weights:
+    rs_rank: 0.40
+    distance_from_52wk_high: 0.20
+    ma200_slope: 0.20
+    volume_trend: 0.20
+  max_candidates: 20             # hard cap before any LLM call sees anything
+
+sizing:
+  account_equity: 25000          # override at runtime with SCREENER_EQUITY
+  risk_per_trade_pct: 0.75       # of account equity, risked to the stop
+  atr_window: 14
+  atr_stop_multiple: 2.0
+  target_r_multiple: 2.5         # first target, in units of initial risk
+  max_open_positions: 6
+  max_portfolio_heat_pct: 4.0    # total open risk across all positions
+  max_position_pct: 25.0         # cap any single position's notional
+  max_same_sector: 2
+  # Never take more of a name than you can exit. Expressed as a share of the
+  # 50-day average volume; 0.5% of ADV is a conservative retail assumption.
+  max_participation_pct: 0.5
+  min_shares: 1                  # below this the trade is not worth taking
+
+exits:
+  # Exit rules, in priority order. Evaluated top-down; the first that fires wins.
+  max_hold_days: 40              # a swing trade that has not worked in 8 weeks
+  breakeven_after_r: 1.0         # once +1R, never let it become a loser
+  trail_after_r: 2.0             # once +2R, trail the stop at (R - 1)
+  trail_atr_multiple: 2.5        # wider than the entry stop: let winners breathe
+  # Soft signals — surfaced as WATCH, not acted on automatically.
+  warn_below_ma: 50              # closed below its 50-day
+  warn_rs_below: 50              # relative strength has decayed
+  # Scale out half at the first target rather than exiting whole. Set false to
+  # take the full position off at the target instead.
+  scale_out_at_target: true
+  scale_out_fraction: 0.5
+
+regime:
+  benchmark: SPY
+  # NOTE: there is no VIX on the free data stack (Alpaca does not carry index
+  # products on the IEX feed). We use SPY's own realized volatility instead --
+  # 20-day annualized close-to-close. It is not VIX, it is not forward-looking,
+  # and it turns up a day or two later in a shock. Documented in docs/stage-b.md.
+  risk_off_if:                   # ANY of these -> RISK_OFF, no new entries
+    spy_below_ma: 50             # SPY closes below its 50-day
+    breadth_pct_above_200ma_below: 40   # under 40% of the universe above its 200-day
+    realized_vol_above: 25       # SPY 20-day annualized vol, percent
+  neutral_if:                    # ANY of these -> NEUTRAL (size down, be picky)
+    breadth_pct_above_200ma_below: 50
+    realized_vol_above: 18
+    spy_below_ma: 20
+  # In NEUTRAL, cut both the number of names and the risk per trade.
+  neutral_risk_multiplier: 0.5
+  neutral_max_positions: 3
